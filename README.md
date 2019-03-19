@@ -1,7 +1,7 @@
 # Schnorr-s-ID-protocol-EC-
 An EC implementation of Schnorr's ID protocol (example)
 
-####Schnorr's Protocol
+#### Schnorr's Protocol
 
 Prover (P, client) proves to Verifier (V, server) that he has pr
 
@@ -13,7 +13,7 @@ Prover (P, client) proves to Verifier (V, server) that he has pr
 * P->V: response (r = k + e * pr)
 * V->P: OK (r*G =? K + e*P)
 
-####Usage
+#### Usage
 
 Run server: call `RunServer()` function (in `server/server_test.go`, `TestRunServer`)
 
