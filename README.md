@@ -1,4 +1,4 @@
-# Schnorr-s-ID-protocol-EC-
+# Schnorr's ID protocol
 An EC implementation of Schnorr's ID protocol (example)
 
 #### Schnorr's Protocol
