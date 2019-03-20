@@ -52,23 +52,24 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Client connected from " + remoteAddr)
 
 	scanner := bufio.NewScanner(conn)
-	var pub *ecdsa.PublicKey
-	var x, y *big.Int // K = (x, y)
-	var e *big.Int // challenge
-	var r *big.Int // response
+	pub := new(ecdsa.PublicKey)
+	x := new(big.Int) // K = (x, y)
+	y := new(big.Int) // K = (x, y)
+	e := new(big.Int) // challenge
+	r := new(big.Int) // response
 
 	for {
 		ok := scanner.Scan()
 		if !ok {
 			break
 		}
-		handleMessage(scanner.Text(), conn, &pub, &x, &y, &e, r)
+		handleMessage(scanner.Text(), conn, pub, x, y, e, r)
 	}
 
 	fmt.Println("Client at " + remoteAddr + " disconnected.")
 }
 
-func handleMessage(message string, conn net.Conn, pub **ecdsa.PublicKey, x, y, e **big.Int, r *big.Int) {
+func handleMessage(message string, conn net.Conn, pub *ecdsa.PublicKey, x, y, e, r *big.Int) {
 	fmt.Println("[receive] " + message)
 
 	if len(message) > 0 && message[0] == '/' {
@@ -111,7 +112,9 @@ func handleMessage(message string, conn net.Conn, pub **ecdsa.PublicKey, x, y, e
 				fmt.Println("Cannot get public key!")
 				os.Exit(1)
 			}
-			*pub = &ecdsa.PublicKey{pubKey.Curve, pubKey.X, pubKey.Y}
+			pub.Curve = pubKey.Curve
+			pub.X = pubKey.X
+			pub.Y = pubKey.Y
 
 			conn.Write([]byte(Schnorr.HandshakePrefix + "Success\n"))
 			state = Schnorr.INIT
@@ -138,16 +141,16 @@ func handleMessage(message string, conn net.Conn, pub **ecdsa.PublicKey, x, y, e
 				conn.Write([]byte("/error: DecodeString fail!\n"))
 				break
 			}
-			*x = new(big.Int).SetBytes(xHex)
+			x.SetBytes(xHex)
 			yHex, err := hex.DecodeString(jsonMsg.Ky)
 			if err != nil {
 				fmt.Println("DecodeString fail!")
 				conn.Write([]byte("/error: DecodeString fail!\n"))
 				break
 			}
-			*y = new(big.Int).SetBytes(yHex)
+			y.SetBytes(yHex)
 
-			params := (*pub).Params()
+			params := pub.Params()
 			b := make([]byte, params.BitSize/8+8)
 			_, err = io.ReadFull(rand.Reader, b)
 			if err != nil {
@@ -156,12 +159,12 @@ func handleMessage(message string, conn net.Conn, pub **ecdsa.PublicKey, x, y, e
 				break
 			}
 			one := new(big.Int).SetInt64(1)
-			*e = new(big.Int).SetBytes(b)
+			e.SetBytes(b)
 			n := new(big.Int).Sub(params.N, one)
-			(*e).Mod(*e, n)
-			(*e).Add(*e, one)
+			e.Mod(e, n)
+			e.Add(e, one)
 
-			conn.Write([]byte(Schnorr.CommitPrefix + hex.EncodeToString((*e).Bytes()) + "\n"))
+			conn.Write([]byte(Schnorr.CommitPrefix + hex.EncodeToString(e.Bytes()) + "\n"))
 			state = Schnorr.COMMIT
 			fmt.Println("Commit success!")
 
@@ -188,10 +191,10 @@ func handleMessage(message string, conn net.Conn, pub **ecdsa.PublicKey, x, y, e
 			}
 			r = new(big.Int).SetBytes(rHex)
 
-			//fmt.Printf("%v\nx: %v\ny: %v\ne: %v\nr: %v\n", *pub, *x, *y, *e, r)
-			Rx, Ry := (*pub).ScalarBaseMult(r.Bytes())
-			ePx, ePy := (*pub).ScalarMult((*pub).X, (*pub).Y, (*e).Bytes())
-			RRx, RRy := (*pub).Add(*x, *y, ePx, ePy)
+			//fmt.Printf("%v\nx: %v\ny: %v\ne: %v\nr: %v\n", pub, x, y, e, r)
+			Rx, Ry := pub.ScalarBaseMult(r.Bytes())
+			ePx, ePy := pub.ScalarMult(pub.X, pub.Y, e.Bytes())
+			RRx, RRy := pub.Add(x, y, ePx, ePy)
 			if RRx.Cmp(Rx) == 0 && RRy.Cmp(Ry) == 0 {
 				fmt.Println("PASS!")
 				conn.Write([]byte(Schnorr.CommitPrefix + "Success\n"))
