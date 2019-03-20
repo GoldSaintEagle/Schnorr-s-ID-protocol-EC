@@ -197,7 +197,7 @@ func handleMessage(message string, conn net.Conn, pub *ecdsa.PublicKey, x, y, e,
 			RRx, RRy := pub.Add(x, y, ePx, ePy)
 			if RRx.Cmp(Rx) == 0 && RRy.Cmp(Ry) == 0 {
 				fmt.Println("PASS!")
-				conn.Write([]byte(Schnorr.CommitPrefix + "Success\n"))
+				conn.Write([]byte(Schnorr.ResponsePrefix + "Success\n"))
 				state = Schnorr.ACCEPT
 				break
 			}

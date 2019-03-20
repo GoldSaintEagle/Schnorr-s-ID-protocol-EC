@@ -30,8 +30,8 @@ var state = Schnorr.UNINIT
 var certPath = "./eccert.pem"
 var privKeyPath = "./ecpriv.pem"
 
-var e *big.Int
-var k *big.Int
+var e = new(big.Int)
+var k = new(big.Int)
 
 func main() {
 	RunClient()
@@ -162,7 +162,7 @@ func handleCommands(text string) bool {
 			fmt.Println("DecodeString fail!")
 			break
 		}
-		e = new(big.Int).SetBytes(eHex)
+		e.SetBytes(eHex)
 		fmt.Println("\b\bCommit pass.")
 		state = Schnorr.COMMIT
 
@@ -226,7 +226,7 @@ func makeMessage(text string, priv *ecdsa.PrivateKey) (string, bool) {
 			os.Exit(1)
 		}
 		one := new(big.Int).SetInt64(1)
-		k = new(big.Int).SetBytes(b)
+		k.SetBytes(b)
 		n := new(big.Int).Sub(params.N, one)
 		k.Mod(k, n)
 		k.Add(k, one)
